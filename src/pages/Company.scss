@@ -1,0 +1,19 @@
+$theme-colors: ( "primary": #45A83D, "secondary": #9AF58D, "title": #A83A8B, "subtitle": #FECCEB, "content": #F580C4);
+.content-row {
+    min-height: 100px;
+    padding: 20px;
+}
+
+.subtitle-content {
+    background: map-get($map: $theme-colors, $key: 'subtitle');
+}
+
+.regular-content {
+    background: map-get($map: $theme-colors, $key: 'content');
+}
+
+.custom-border {
+    border: 1px solid #45A83D;
+    border-radius: 5px;
+    padding: 20px;
+}
