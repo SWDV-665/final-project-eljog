@@ -1,5 +1,5 @@
 import { AnyAction } from "redux";
-import { Portfolio } from "../models";
+import { Portfolio, StockTradeResponse, TransactionType } from "../models";
 
 const defaultPortfolioState = {
     balance: 0,
@@ -11,16 +11,25 @@ const portfolioReducer = (state: Portfolio = defaultPortfolioState, action: AnyA
         case 'UPDATE_PORTFOLIO':
             return action.payload;
         case 'UPDATE_PORTFOLIO_STOCK':
+            const stockTradeResponse = action.payload as StockTradeResponse;
             const stocks = [...state.stocks];
-            const index = stocks.findIndex(s => s.symbol == action.payload.symbol);
+            const index = stocks.findIndex(s => s.symbol == stockTradeResponse.stock.symbol);
             if (index === -1) {
-                stocks.push(action.payload);
+                stocks.push(stockTradeResponse.stock);
             }
             else {
-                stocks.splice(index, 1, action.payload);
+                stocks.splice(index, 1, stockTradeResponse.stock);
             }
 
-            return { ...state, stocks: stocks };
+            let balance = state.balance;
+            if(stockTradeResponse.transaction.transactionType == TransactionType.Buy) {
+                balance = balance - (stockTradeResponse.transaction.price * stockTradeResponse.transaction.shares);
+            }
+            else {
+                balance = balance + (stockTradeResponse.transaction.price * stockTradeResponse.transaction.shares);
+            }
+
+            return { ...state, stocks: stocks, balance: balance };
         default:
             return state;
     }

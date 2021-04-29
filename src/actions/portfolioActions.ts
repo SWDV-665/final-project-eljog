@@ -1,4 +1,4 @@
-import { Portfolio, Stock } from "../models"
+import { Portfolio, Stock, StockTradeResponse } from "../models"
 
 export const updatePortfolio = (payload: Portfolio) => {
     return {
@@ -7,7 +7,7 @@ export const updatePortfolio = (payload: Portfolio) => {
     };
 }
 
-export const updatePortfolioStock = (payload: Stock) => {
+export const updatePortfolioStock = (payload: StockTradeResponse) => {
     return {
         type: 'UPDATE_PORTFOLIO_STOCK',
         payload: payload,

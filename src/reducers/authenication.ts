@@ -3,18 +3,16 @@ import { AnyAction } from "redux";
 export interface AuthState {
     isLoggedIn: boolean,
     username: string,
-    accessToken: string,
-    idToken: string,
-    refreshToken: string,
+    displayName: string,
+    email: string,
     confirmationCodeDestination?: string
 }
 
 const defaultAuthState = {
     isLoggedIn: false,
     username: '',
-    accessToken: '',
-    idToken: '',
-    refreshToken: '',
+    displayName: '',
+    email: ''
 } as AuthState;
 
 const authenticationReducer = (state: AuthState = defaultAuthState, action: AnyAction): AuthState => {
