@@ -1,4 +1,4 @@
-import { IonContent, IonHeader, IonItem, IonList, IonNote, IonPage, IonSearchbar, IonSpinner, IonText, IonTitle, IonToolbar } from '@ionic/react';
+import { IonContent, IonHeader, IonItem, IonList, IonNote, IonPage, IonSearchbar, IonSpinner, IonTitle, IonToolbar } from '@ionic/react';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router';
@@ -7,6 +7,9 @@ import { RootState } from '../reducers';
 import { AuthState } from '../reducers/authenication';
 import { apiService } from '../services/ApiService';
 
+/**
+ * Seach page that allows searching stock symbols 
+ */
 const CompanySearch: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -16,6 +19,9 @@ const CompanySearch: React.FC = () => {
 
   const history = useHistory();
 
+  /**
+   * Redirect to login page if not logged in.
+   */
   useEffect(() => {
     if (!authentication.isLoggedIn) {
       history.push('/login', { direction: 'none' });
@@ -23,6 +29,12 @@ const CompanySearch: React.FC = () => {
     }
   }, [authentication]);
 
+
+  /**
+   * Perform the serach as the user types in the search term
+   * @param query search term
+   * @returns a list of matching symbols
+   */
   const handleSearch = async (query: string) => {
     if (!query) {
       setSymbols([]);

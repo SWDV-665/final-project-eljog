@@ -34,7 +34,7 @@ const App: React.FC = () => {
   const authentication = useSelector<RootState, AuthState>((s) => s.authentication);
   const dispatch = useDispatch();
 
-  // Restore login state
+  // Restore login state when a user re-opens the app
   useEffect(() => {
     if (authentication.isLoggedIn) {
       return;
@@ -67,6 +67,7 @@ const App: React.FC = () => {
     <IonApp>
       <IonReactRouter>
         <IonTabs>
+          {/* Page routing */}
           <IonRouterOutlet>
             <Route path="/" exact={true}>
               <Redirect to="/portfolio" />
@@ -90,6 +91,8 @@ const App: React.FC = () => {
               <Company />
             </Route>
           </IonRouterOutlet>
+
+           {/* Navigation tabs. Only displayed if logged in */}
           <IonTabBar slot="bottom" hidden={!authentication.isLoggedIn}>
             <IonTabButton tab="tab1" href="/portfolio">
               <IonIcon icon={trendingUp} />
