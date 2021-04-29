@@ -8,11 +8,17 @@ import { logout } from '../actions';
 import { RootState } from '../reducers';
 import { AuthState } from '../reducers/authenication';
 
+/**
+ * The about page, that is displayed when the `FreeMarket` tab is selected.
+ */
 const About: React.FC = () => {
     const dispatch = useDispatch();
     const authentication = useSelector<RootState, AuthState>((s) => s.authentication);
     const history = useHistory();
 
+    /**
+     * Redirect to login page if not logged in.
+     */
     useEffect(() => {
         if (!authentication.isLoggedIn) {
             history.push('/login', { direction: 'none' });

@@ -1,3 +1,7 @@
+/**
+ * All model classes, interfaces, and enumerations,
+ * used in the business transactions
+ */
 export interface SymbolInfo {
     symbol: string;
     companyName: string;

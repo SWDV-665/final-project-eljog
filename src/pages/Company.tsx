@@ -16,6 +16,10 @@ interface Toast {
   isError?: boolean;
 }
 
+/**
+ * Page that displays the details of a company.
+ * User can also make a trade from this page.
+ */
 const Company: React.FC = () => {
   const { symbol } = useParams<{ symbol: string; }>();
 
@@ -36,12 +40,16 @@ const Company: React.FC = () => {
 
   const history = useHistory();
 
+  /**
+   * Redirect to login page if not logged in.
+   */
   useEffect(() => {
     if (!authentication.isLoggedIn) {
       history.push('/login', { direction: 'none' });
       return;
     }
 
+    // Fetch company profile when this page is displayed
     async function fetchCompanyProfile() {
       const company = await apiService.fetchCompanyProfile(symbol);
       setCompanyProfile(company);
@@ -50,6 +58,11 @@ const Company: React.FC = () => {
     fetchCompanyProfile();
   }, [authentication, symbol]);
 
+  /**
+   * Calculate the estimated purchase cost/number of shares,
+   * when the user is trying to make a trade
+   * @returns the estimate
+   */
   const estimateTrade = () => {
     const price = companyProfile?.priceInfo.price;
     if (quantity && price) {
@@ -64,6 +77,10 @@ const Company: React.FC = () => {
     return 0.0;
   };
 
+  /**
+   * Execute a trade request (buy/sell)
+   * @param event form submission event
+   */
   const handleTrade: React.FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -93,7 +110,10 @@ const Company: React.FC = () => {
       console.log("Trade Result", result);
 
       const action = result.transaction.transactionType === TransactionType.Buy ? 'Purchased' : 'Sold';
-      setToastMessage({ title: `${action} ${result.transaction.symbol} for $${(result.transaction.price * result.transaction.shares).toFixed(3)}`, body: `Successfully ${action.toLowerCase()} ${result.transaction.shares.toFixed(3)} shares of ${result.transaction.symbol} at an average cost of ${result.transaction.price.toFixed(3)}.` })
+      setToastMessage({
+        title: `${action} ${result.transaction.symbol} for $${(result.transaction.price * result.transaction.shares).toFixed(3)}`,
+        body: `Successfully ${action.toLowerCase()} ${result.transaction.shares.toFixed(3)} shares of ${result.transaction.symbol} at an average cost of ${result.transaction.price.toFixed(3)}.`
+      });
     } catch (error) {
       let errorMessage = 'Unable to trade the stock at the moment. Please try again later.';
       if (error instanceof ResponseError) {
@@ -111,11 +131,76 @@ const Company: React.FC = () => {
     }
   }
 
-
+  /**
+   * Format currency values into USD.
+   */
   const currencyFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
   });
+
+  // Modal form UI that is used for a trade (buy/sell)
+  const tradeRequestModalForm = (
+    <IonRow className="ion-text-center">
+      <IonCol className="text-center">
+        <IonModal isOpen={showBuySell} onDidDismiss={() => setShowBuySell(false)} >
+          <IonHeader>
+            <IonToolbar color="title">
+              <IonTitle color="light">{transactionType} {companyProfile?.symbol}</IonTitle>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent>
+            <form noValidate onSubmit={handleTrade}>
+              <IonList>
+                <IonItem key="1">
+                  <IonLabel position="stacked" color="primary">Invest In</IonLabel>
+                  <IonSelect interface="popover" value={investType} placeholder="Select One" onIonChange={(e) => { setInvestType(e.detail.value as InvestType) }}>
+                    <IonSelectOption value={InvestType.Dollars}>{InvestType.Dollars}</IonSelectOption>
+                    <IonSelectOption value={InvestType.Shares}>{InvestType.Shares}</IonSelectOption>
+                  </IonSelect>
+
+                </IonItem>
+
+                <IonItem key="2">
+                  <IonLabel position="stacked" color="primary">{investType === InvestType.Shares ? "Shares" : "Amount"}</IonLabel>
+                  <IonInput name="quantity" type="number" value={quantity} onIonChange={(e) => setQuantity(parseFloat(e.detail.value!))} required />
+                  {formSubmitted && quantityError && <IonText color="danger">
+                    <p className="ion-padding-start">
+                      Entered quantity is not valid.
+                    </p>
+                  </IonText>}
+                </IonItem>
+
+                <IonItem key="3">
+                  <IonLabel position="stacked" color="primary">Estimated {investType === InvestType.Dollars ? "shares" : "price"}</IonLabel>
+                  <IonText >
+                    {estimateTrade()}
+                  </IonText>
+                </IonItem>
+
+                <IonRow>
+                  {!submitting && <IonCol>
+                    <IonButton expand="block" color="light" onClick={() => setShowBuySell(false)}>
+                      Cancel
+                    </IonButton>
+                  </IonCol>
+                  }
+                  <IonCol>
+                    <IonButton expand="block" type="submit">
+                      {submitting ?
+                        <IonSpinner name="dots" />
+                        :
+                        <span>{transactionType}</span>
+                      }
+                    </IonButton>
+                  </IonCol>
+                </IonRow>
+              </IonList>
+            </form>
+          </IonContent>
+        </IonModal>
+      </IonCol>
+    </IonRow>);
 
   return (
     <IonPage>
@@ -137,6 +222,7 @@ const Company: React.FC = () => {
           </IonToolbar>
         </IonHeader>
 
+        {/* Fab that displays Trade options (buttons to buy/sell) */}
         <IonFab vertical="bottom" horizontal="end" slot="fixed">
           <IonFabButton>Trade</IonFabButton>
           <IonFabList side="top">
@@ -151,6 +237,7 @@ const Company: React.FC = () => {
           </IonFabList>
         </IonFab>
 
+        {/* Toast that displays the trade result */}
         <IonToast
           isOpen={!!toastMessage}
           onDidDismiss={() => setToastMessage(null)}
@@ -158,6 +245,7 @@ const Company: React.FC = () => {
           duration={3000}
         />
 
+        {/* Display company logo, name and price */}
         <IonItem color="subtitle" lines="none">
           <IonRow>
             <IonCol>
@@ -173,73 +261,7 @@ const Company: React.FC = () => {
           </IonRow>
         </IonItem>
 
-
-        <IonRow className="ion-text-center">
-          <IonCol>
-            {companyProfile &&
-              <IonRow>
-                <IonCol className="text-center">
-                  <IonModal isOpen={showBuySell} onDidDismiss={() => setShowBuySell(false)} >
-                    <IonHeader>
-                      <IonToolbar color="title">
-                        <IonTitle color="light">{transactionType} {companyProfile?.symbol}</IonTitle>
-                      </IonToolbar>
-                    </IonHeader>
-                    <IonContent>
-                      <form noValidate onSubmit={handleTrade}>
-                        <IonList>
-                          <IonItem key="1">
-                            <IonLabel position="stacked" color="primary">Invest In</IonLabel>
-                            <IonSelect interface="popover" value={investType} placeholder="Select One" onIonChange={(e) => { setInvestType(e.detail.value as InvestType) }}>
-                              <IonSelectOption value={InvestType.Dollars}>{InvestType.Dollars}</IonSelectOption>
-                              <IonSelectOption value={InvestType.Shares}>{InvestType.Shares}</IonSelectOption>
-                            </IonSelect>
-
-                          </IonItem>
-
-                          <IonItem key="2">
-                            <IonLabel position="stacked" color="primary">{investType === InvestType.Shares ? "Shares" : "Amount"}</IonLabel>
-                            <IonInput name="quantity" type="number" value={quantity} onIonChange={(e) => setQuantity(parseFloat(e.detail.value!))} required />
-                            {formSubmitted && quantityError && <IonText color="danger">
-                              <p className="ion-padding-start">
-                                Entered quantity is not valid.
-                                </p>
-                            </IonText>}
-                          </IonItem>
-
-                          <IonItem key="3">
-                            <IonLabel position="stacked" color="primary">Estimated {investType === InvestType.Dollars ? "shares" : "price"}</IonLabel>
-                            <IonText >
-                              {estimateTrade()}
-                            </IonText>
-                          </IonItem>
-
-                          <IonRow>
-                            {!submitting && <IonCol>
-                              <IonButton expand="block" color="light" onClick={() => setShowBuySell(false)}>
-                                Cancel
-                                </IonButton>
-                            </IonCol>
-                            }
-                            <IonCol>
-                              <IonButton expand="block" type="submit">
-                                {submitting ?
-                                  <IonSpinner name="dots" />
-                                  :
-                                  <span>{transactionType}</span>
-                                }
-                              </IonButton>
-                            </IonCol>
-                          </IonRow>
-                        </IonList>
-                      </form>
-                    </IonContent>
-                  </IonModal>
-                </IonCol>
-              </IonRow>
-            }
-          </IonCol>
-        </IonRow>
+        {/* Display stock price statistics */}
         <IonListHeader>Price Info</IonListHeader>
         <IonRow className="subtitle-content">
           <IonCol>
@@ -290,6 +312,7 @@ const Company: React.FC = () => {
           </IonCol>
         </IonRow>
 
+        {/* Display invest,ent details, if the user already has shares on this stock */}
         {companyProfile?.symbol && portfolio.stocks.find(s => s.symbol === companyProfile.symbol) &&
           <div>
             <IonListHeader>Your Investment</IonListHeader>
@@ -321,6 +344,7 @@ const Company: React.FC = () => {
           </div>
         }
 
+        {/* Display additional company information */}
         <IonListHeader>Company Info</IonListHeader>
         <IonRow className="subtitle-content">
           <IonCol>
@@ -350,6 +374,8 @@ const Company: React.FC = () => {
             <hr />
           </IonCol>
         </IonRow>
+
+        {tradeRequestModalForm}
       </IonContent>
     </IonPage>
   );
