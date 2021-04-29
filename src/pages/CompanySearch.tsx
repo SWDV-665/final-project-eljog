@@ -1,12 +1,27 @@
 import { IonContent, IonHeader, IonItem, IonList, IonNote, IonPage, IonSearchbar, IonSpinner, IonText, IonTitle, IonToolbar } from '@ionic/react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useHistory } from 'react-router';
 import { SymbolInfo } from '../models';
+import { RootState } from '../reducers';
+import { AuthState } from '../reducers/authenication';
 import { apiService } from '../services/ApiService';
 
 const CompanySearch: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [symbols, setSymbols] = useState<SymbolInfo[]>([]);
+
+  const authentication = useSelector<RootState, AuthState>((s) => s.authentication);
+
+  const history = useHistory();
+
+  useEffect(() => {
+    if (!authentication.isLoggedIn) {
+      history.push('/login', { direction: 'none' });
+      return;
+    }
+  }, [authentication]);
 
   const handleSearch = async (query: string) => {
     if (!query) {

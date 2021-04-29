@@ -15,7 +15,7 @@ const About: React.FC = () => {
 
     useEffect(() => {
         if (!authentication.isLoggedIn) {
-            history.push('/login');
+            history.push('/login', { direction: 'none' });
             return;
         }
     }, [authentication]);
