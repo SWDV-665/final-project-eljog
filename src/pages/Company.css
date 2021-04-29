@@ -1,0 +1,7 @@
+.subtitle-content {
+    background: var(--ion-color-subtitle);
+}
+
+.regular-content {
+    background: var(--ion-color-content);
+}

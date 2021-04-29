@@ -40,8 +40,8 @@ const App: React.FC = () => {
       return;
     }
 
-    Auth.currentSession().then(async (c) => {
-      if (c.isValid()) {
+    Auth.currentSession().then(async (session) => {
+      if (session.isValid()) {
         const maybeUser = await Auth.currentAuthenticatedUser();
         if (maybeUser) {
           const user = maybeUser as CognitoUser;
@@ -49,9 +49,8 @@ const App: React.FC = () => {
           const authState = {
             isLoggedIn: true,
             username: user.getUsername(),
-            accessToken: c.getAccessToken().getJwtToken(),
-            idToken: c.getIdToken().getJwtToken(),
-            refreshToken: c.getRefreshToken().getToken(),
+            email: session.getIdToken().payload['email'],
+            displayName: session.getIdToken().payload['custom:name'],
           } as AuthState;
           dispatch(login(authState));
 

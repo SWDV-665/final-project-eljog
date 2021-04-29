@@ -1,6 +1,6 @@
+import { CognitoUserInterface } from '@aws-amplify/ui-components';
 import { Plugins } from '@capacitor/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonList, IonMenuButton, IonPage, IonRow, IonSpinner, IonText, IonTitle, IonToolbar, useIonAlert } from '@ionic/react';
-import { CognitoUser } from 'amazon-cognito-identity-js';
+import { IonButton, IonCol, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonList, IonPage, IonRow, IonSpinner, IonText, IonToolbar, useIonAlert } from '@ionic/react';
 import { Auth } from 'aws-amplify';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,7 +8,7 @@ import { useHistory } from 'react-router';
 import { login } from '../actions';
 import { RootState } from '../reducers';
 import { AuthState } from '../reducers/authenication';
-import './Login.scss';
+import './Login.css';
 
 const Login: React.FC = () => {
     const [password, setPassword] = useState('');
@@ -54,17 +54,18 @@ const Login: React.FC = () => {
 
         setSigningIn(true);
         try {
-            const user = await Auth.signIn(username, password) as CognitoUser;
+            const user = await Auth.signIn(username, password) as CognitoUserInterface;
             const uname = user.getUsername();
             const authState = {
                 isLoggedIn: true,
-                username: uname
+                username: uname,
             } as AuthState;
 
             const session = await Auth.currentSession();
-            authState.accessToken = session.getAccessToken().getJwtToken();
-            authState.idToken = session.getIdToken().getJwtToken();
-            authState.refreshToken = session.getRefreshToken().getToken();
+            if (session.isValid()) {
+                authState.email = session.getIdToken().payload['email'];
+                authState.displayName = session.getIdToken().payload['custom:name'];
+            }
 
             dispatch(login(authState));
         } catch (error) {
@@ -80,21 +81,18 @@ const Login: React.FC = () => {
     return (
         <IonPage id="login-page">
             <IonHeader>
-                <IonToolbar>
-                    <IonButtons slot="start">
-                        <IonMenuButton></IonMenuButton>
-                    </IonButtons>
-                    <IonTitle>Welcome to FreeMarket</IonTitle>
+                <IonToolbar color="title" className="ion-text-center">
+                    <img src="assets/logo.png" alt="Freemarket logo" />
                 </IonToolbar>
             </IonHeader>
-            <IonContent>
+            <IonContent color="subtitle">
 
                 <div className="login-logo">
-                    <img src="assets/logo.png" alt="Freemarket logo" />
+                    <img src="assets/game.jpg" alt="Freemarket logo" color="dark" />
                 </div>
 
                 <form noValidate onSubmit={handleSubmit}>
-                    <IonList>
+                    <IonList lines="none">
                         <IonItem>
                             <IonLabel position="stacked" color="primary">Username</IonLabel>
                             <IonInput name="username" type="text" value={username} spellCheck={false} autocapitalize="off" onIonChange={e => setUsername(e.detail.value!)}
@@ -119,6 +117,13 @@ const Login: React.FC = () => {
                                 Password is required
                             </p>
                         </IonText>}
+                        {errorMessage &&
+                            <IonText color="danger">
+                                <p className="ion-padding-start">
+                                    {errorMessage}
+                                </p>
+                            </IonText>
+                        }
                     </IonList>
 
                     <IonRow>
@@ -138,13 +143,6 @@ const Login: React.FC = () => {
                                 })
                             }>Signup</IonButton>
                         </IonCol>
-                    </IonRow>
-                    <IonRow>
-                        {errorMessage && <IonText color="danger">
-                            <p className="ion-padding-start">
-                                {errorMessage}
-                            </p>
-                        </IonText>}
                     </IonRow>
                 </form>
 

@@ -1,13 +1,10 @@
+import { Auth } from 'aws-amplify';
 import { CompanyProfile, ErrorResponse, Portfolio, ResponseError, StockTradeRequest, StockTradeResponse, SymbolInfo, TransactionType } from '../models';
-import { RootState } from '../reducers';
-import { AuthState } from '../reducers/authenication';
-import store from '../store';
 
-function getAccessToken(): string {
-    const state: RootState = store.getState();
-    const auth: AuthState = state.authentication;
-    if (auth.isLoggedIn && auth.accessToken) {
-        return auth.accessToken;
+async function getAccessToken(): Promise<string> {
+    const session = await Auth.currentSession();
+    if (session.isValid()) {
+        return session.getAccessToken().getJwtToken();
     }
 
     throw new Error("Not logged in");
@@ -47,10 +44,11 @@ class ApiService {
 
     private async sendRequest<TInput, TResponse>(uri: string, method: HttpMethod, body?: TInput): Promise<TResponse> {
         const fullUrl = `${this.apiUrlBase}/${uri}`;
+        const accessToken = await getAccessToken();
         const response = await fetch(fullUrl, {
             method: method,
             headers: new Headers({
-                'Authorization': `Bearer ${getAccessToken()}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
             }),
             body: JSON.stringify(body)

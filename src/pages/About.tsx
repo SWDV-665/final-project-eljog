@@ -1,4 +1,4 @@
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import { Auth } from 'aws-amplify';
 import { logOut } from 'ionicons/icons';
 import React, { useEffect } from 'react';
@@ -32,21 +32,23 @@ const About: React.FC = () => {
     return (
         <IonPage>
             <IonHeader>
-                <IonToolbar>
-                    <IonTitle>FreeMarket</IonTitle>
+                <IonToolbar color="title">
+                    <IonTitle color="light">FreeMarket</IonTitle>
                 </IonToolbar>
             </IonHeader>
             <IonContent fullscreen>
                 <IonHeader collapse="condense">
-                    <IonToolbar>
-                        <IonTitle size="large">FreeMarket</IonTitle>
+                    <IonToolbar color="title">
+                        <IonTitle size="large" color="light">FreeMarket</IonTitle>
                     </IonToolbar>
                 </IonHeader>
                 <IonCard>
-                    <img src="assets/experiment.jpg" alt="Freemarket logo" color="dark" />
+                    <div style={{ maxHeight: "30vh", overflow: "hidden" }}>
+                        <img src="assets/experiment.jpg" alt="Freemarket" color="dark" />
+                    </div>
                     <IonCardHeader>
-                        <IonCardSubtitle>Thank you {authentication.username} for using</IonCardSubtitle>
-                        <IonCardTitle>FreeMarket</IonCardTitle>
+                        <IonCardTitle>Hey {authentication.displayName || authentication.username}!</IonCardTitle>
+                        <IonCardSubtitle>Thank you for using FreeMarket</IonCardSubtitle>
                     </IonCardHeader>
 
                     <IonCardContent>
@@ -56,10 +58,12 @@ const About: React.FC = () => {
                         Play investment games to for both fun as well as mastering skills, and more...
                     </IonCardContent>
                 </IonCard>
-                <IonItem onClick={() => signOut()}>
-                    <IonIcon slot="start" icon={logOut} />
-                    <IonLabel>Sign Out</IonLabel>
-                </IonItem>
+                <IonList>
+                    <IonItem onClick={() => signOut()} lines="none" key="signout">
+                        <IonIcon slot="start" icon={logOut} />
+                        <IonLabel>Sign Out</IonLabel>
+                    </IonItem>
+                </IonList>
             </IonContent>
         </IonPage>
     );
