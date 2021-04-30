@@ -19,24 +19,28 @@ const About: React.FC = () => {
     const [loaded, setLoaded] = useState(false);
     const dispatch = useDispatch();
     const history = useHistory();
-    
+
     /**
-    * Redirect to login page if not logged in.
-    */
+   * Redirect to login page if not logged in.
+   */
     useEffect(() => {
         if (!authentication.isLoggedIn) {
-            history.push('/login', { direction: 'none' });
+            history.replace('/login', { direction: 'none' });
             return;
         }
+    });
 
-        // Fetch portfolio from server on the first load
+    /**
+    * Fetch portfolio from server on the first load
+    */
+    useEffect(() => {
         const fetchPortfolio = async () => {
             const fetchedPortfolio = await apiService.fetchPortfolio();
             dispatch(updatePortfolio(fetchedPortfolio));
             setLoaded(true);
         };
-    
-        fetchPortfolio();
+
+        authentication.isLoggedIn && fetchPortfolio();
     }, [authentication]);
 
     /**

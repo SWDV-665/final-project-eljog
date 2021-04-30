@@ -5,12 +5,17 @@ import { CompanyProfile, ErrorResponse, Portfolio, ResponseError, StockTradeRequ
  * Get the access token for the current user, to make API calls against the service
  */
 async function getAccessToken(): Promise<string> {
-    const session = await Auth.currentSession();
-    if (session.isValid()) {
-        return session.getAccessToken().getJwtToken();
-    }
+    try {
+        const session = await Auth.currentSession();
+        if (session.isValid()) {
+            return session.getAccessToken().getJwtToken();
+        }
 
-    throw new Error("Not logged in");
+        throw new ResponseError({ errorCode: "401", message: "Invalid user session" });
+    }
+    catch (err) {
+        throw new ResponseError({ errorCode: "401", message: "Not logged in" });
+    }
 }
 
 enum HttpMethod {

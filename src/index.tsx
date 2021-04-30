@@ -3,12 +3,14 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 import reportWebVitals from './reportWebVitals';
-import Amplify from 'aws-amplify';
+import Amplify, { Auth } from 'aws-amplify';
 import awsconfig from './aws-exports';
 import store from './store';
 import { Provider } from 'react-redux';
+import NativeKeyValueStorage from './nativeStorage';
 
-Amplify.configure(awsconfig)
+Auth.configure({ storage: NativeKeyValueStorage });
+Amplify.configure(awsconfig);
 
 ReactDOM.render(
   <React.StrictMode>

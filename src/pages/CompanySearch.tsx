@@ -27,7 +27,7 @@ const CompanySearch: React.FC = () => {
       history.push('/login', { direction: 'none' });
       return;
     }
-  }, [authentication]);
+  });
 
 
   /**
