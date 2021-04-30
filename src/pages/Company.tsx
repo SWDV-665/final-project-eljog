@@ -45,17 +45,21 @@ const Company: React.FC = () => {
    */
   useEffect(() => {
     if (!authentication.isLoggedIn) {
-      history.push('/login', { direction: 'none' });
+      history.replace('/login', { direction: 'none' });
       return;
     }
+  });
 
-    // Fetch company profile when this page is displayed
+  /**
+   * Fetch company profile when this page is displayed.
+   */
+  useEffect(() => {
     async function fetchCompanyProfile() {
       const company = await apiService.fetchCompanyProfile(symbol);
       setCompanyProfile(company);
     };
 
-    fetchCompanyProfile();
+    authentication.isLoggedIn && fetchCompanyProfile();
   }, [authentication, symbol]);
 
   /**

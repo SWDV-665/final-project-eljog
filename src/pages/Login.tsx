@@ -32,7 +32,7 @@ const Login: React.FC = () => {
      */
     useEffect(() => {
         if (authentication.isLoggedIn) {
-            history.push('/portfolio', { direction: 'none' });
+            history.replace('/portfolio', { direction: 'none' });
         }
     }, [authentication]);
 
