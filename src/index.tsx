@@ -1,13 +1,13 @@
+import Amplify, { Auth } from 'aws-amplify';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
-import * as serviceWorkerRegistration from './serviceWorkerRegistration';
-import reportWebVitals from './reportWebVitals';
-import Amplify, { Auth } from 'aws-amplify';
-import awsconfig from './aws-exports';
-import store from './store';
 import { Provider } from 'react-redux';
+import App from './App';
+import awsconfig from './config.js';
 import NativeKeyValueStorage from './nativeStorage';
+import reportWebVitals from './reportWebVitals';
+import * as serviceWorkerRegistration from './serviceWorkerRegistration';
+import store from './store';
 
 Auth.configure({ storage: NativeKeyValueStorage });
 Amplify.configure(awsconfig);

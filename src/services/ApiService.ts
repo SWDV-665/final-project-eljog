@@ -99,11 +99,11 @@ class ApiService {
 
         var error = await response.json();
         const errorResponse = error as ErrorResponse;
-        if (errorResponse.errorCode) {
+        if (errorResponse.errorCode && errorResponse.errorCode !== "Unknown") {
             throw new ResponseError(errorResponse);
         }
 
-        throw new Error(error ?? `Unknow API call error while calling ${fullUrl}`);
+        throw new Error(error ?? `Unknown API call error while calling ${fullUrl}`);
     }
 
     /**

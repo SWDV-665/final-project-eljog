@@ -2,7 +2,7 @@ import { IonContent, IonHeader, IonItem, IonList, IonNote, IonPage, IonSearchbar
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router';
-import { SymbolInfo } from '../models';
+import { ResponseError, SymbolInfo } from '../models';
 import { RootState } from '../reducers';
 import { AuthState } from '../reducers/authenication';
 import { apiService } from '../services/ApiService';
@@ -14,6 +14,7 @@ const CompanySearch: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [symbols, setSymbols] = useState<SymbolInfo[]>([]);
+  const [isError, setError] = useState(false);
 
   const authentication = useSelector<RootState, AuthState>((s) => s.authentication);
 
@@ -36,6 +37,8 @@ const CompanySearch: React.FC = () => {
    * @returns a list of matching symbols
    */
   const handleSearch = async (query: string) => {
+    setError(false);
+
     if (!query) {
       setSymbols([]);
       return;
@@ -43,10 +46,24 @@ const CompanySearch: React.FC = () => {
 
     setIsLoading(true);
 
-    var symbols = await apiService.searchSymbols(query);
+    try {
+      var symbols = await apiService.searchSymbols(query);
 
-    setSymbols(symbols);
-    setIsLoading(false);
+      setSymbols(symbols);
+    }
+    catch (error) {
+      let errorMessage = 'Unable to fetch comapany profile at the moment. Please try again later.';
+      if (error instanceof ResponseError) {
+        errorMessage = error.message;
+      }
+
+      setError(true);
+
+      console.error('error when buying:', error);
+    }
+    finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -56,6 +73,7 @@ const CompanySearch: React.FC = () => {
           <IonTitle color="light">Search</IonTitle>
         </IonToolbar>
       </IonHeader>
+
       <IonContent fullscreen>
         <IonHeader collapse="condense">
           <IonToolbar color="title">
@@ -82,8 +100,9 @@ const CompanySearch: React.FC = () => {
               )
             })
             :
-            !isLoading && searchText && <div className="ion-text-center"><IonNote>No results found</IonNote></div>
+            !isLoading && !isError && searchText && <div className="ion-text-center"><IonNote>No results found</IonNote></div>
           }
+          {isError && <div className="ion-text-center"><IonNote color="danger">Search failed. Please try again later.</IonNote></div>}
         </IonList>
       </IonContent>
     </IonPage>
