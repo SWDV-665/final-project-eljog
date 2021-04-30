@@ -1,10 +1,10 @@
-import { IonAvatar, IonCard, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonPage, IonRow, IonText, IonTitle, IonToolbar } from '@ionic/react';
+import { IonAvatar, IonCard, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonPage, IonRow, IonText, IonTitle, IonToast, IonToolbar } from '@ionic/react';
 import { searchCircle } from 'ionicons/icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router';
 import { updatePortfolio } from '../actions';
-import { Portfolio, SymbolInfo } from '../models';
+import { Portfolio, ResponseError, SymbolInfo } from '../models';
 import { RootState } from '../reducers';
 import { AuthState } from '../reducers/authenication';
 import { apiService } from '../services/ApiService';
@@ -17,6 +17,7 @@ const About: React.FC = () => {
     const authentication = useSelector<RootState, AuthState>((s) => s.authentication);
     const portfolio = useSelector<RootState, Portfolio>((s) => s.portfolio);
     const [loaded, setLoaded] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const dispatch = useDispatch();
     const history = useHistory();
 
@@ -35,9 +36,21 @@ const About: React.FC = () => {
     */
     useEffect(() => {
         const fetchPortfolio = async () => {
-            const fetchedPortfolio = await apiService.fetchPortfolio();
-            dispatch(updatePortfolio(fetchedPortfolio));
-            setLoaded(true);
+            try {
+                setErrorMessage('');
+
+                const fetchedPortfolio = await apiService.fetchPortfolio();
+                dispatch(updatePortfolio(fetchedPortfolio));
+                setLoaded(true);
+            }
+            catch (error) {
+                let errorMessage = 'Unable to fetch portfolio at the moment. Please try again later.';
+                if (error instanceof ResponseError) {
+                    errorMessage = error.message;
+                }
+
+                setErrorMessage(errorMessage);
+            }
         };
 
         authentication.isLoggedIn && fetchPortfolio();
@@ -173,6 +186,7 @@ const About: React.FC = () => {
                         </IonItem>
                     </IonList>
                 }
+                {errorMessage && <div className="ion-text-center"><IonNote color="danger">{errorMessage}</IonNote></div>}
             </IonContent>
         </IonPage >
     );

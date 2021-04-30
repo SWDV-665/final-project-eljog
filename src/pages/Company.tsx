@@ -10,12 +10,6 @@ import { AuthState } from '../reducers/authenication';
 import { apiService } from '../services/ApiService';
 import './Company.css';
 
-interface Toast {
-  title?: string;
-  body?: string;
-  isError?: boolean;
-}
-
 /**
  * Page that displays the details of a company.
  * User can also make a trade from this page.
@@ -28,7 +22,8 @@ const Company: React.FC = () => {
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [quantityError, setQuantityError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<Toast | null>();
+  const [toastMessage, setToastMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [investType, setInvestType] = useState(InvestType.Dollars);
   const [transactionType, setTransactionType] = useState(TransactionType.Buy);
@@ -55,8 +50,20 @@ const Company: React.FC = () => {
    */
   useEffect(() => {
     async function fetchCompanyProfile() {
-      const company = await apiService.fetchCompanyProfile(symbol);
-      setCompanyProfile(company);
+      try {
+        const company = await apiService.fetchCompanyProfile(symbol);
+        setCompanyProfile(company);
+      }
+      catch (error) {
+        let errorMessage = 'Unable to fetch comapany profile at the moment. Please try again later.';
+        if (error instanceof ResponseError) {
+          errorMessage = error.message;
+        }
+
+        setErrorMessage(errorMessage);
+
+        console.error('error when buying:', error);
+      }
     };
 
     authentication.isLoggedIn && fetchCompanyProfile();
@@ -114,17 +121,14 @@ const Company: React.FC = () => {
       console.log("Trade Result", result);
 
       const action = result.transaction.transactionType === TransactionType.Buy ? 'Purchased' : 'Sold';
-      setToastMessage({
-        title: `${action} ${result.transaction.symbol} for $${(result.transaction.price * result.transaction.shares).toFixed(3)}`,
-        body: `Successfully ${action.toLowerCase()} ${result.transaction.shares.toFixed(3)} shares of ${result.transaction.symbol} at an average cost of ${result.transaction.price.toFixed(3)}.`
-      });
+      setToastMessage(`Successfully ${action.toLowerCase()} ${result.transaction.shares.toFixed(3)} shares of ${result.transaction.symbol} at an average cost of ${result.transaction.price.toFixed(3)}.`);
     } catch (error) {
       let errorMessage = 'Unable to trade the stock at the moment. Please try again later.';
       if (error instanceof ResponseError) {
         errorMessage = error.message;
       }
 
-      setToastMessage({ title: 'Transaction failed', body: errorMessage, isError: true })
+      setToastMessage(errorMessage);
 
       console.error('error when buying:', error);
     } finally {
@@ -244,8 +248,8 @@ const Company: React.FC = () => {
         {/* Toast that displays the trade result */}
         <IonToast
           isOpen={!!toastMessage}
-          onDidDismiss={() => setToastMessage(null)}
-          message={toastMessage?.body}
+          onDidDismiss={() => setToastMessage('')}
+          message={toastMessage}
           duration={3000}
         />
 
@@ -259,125 +263,128 @@ const Company: React.FC = () => {
                     height="32" />
                 </IonAvatar>
                 <IonLabel>{companyProfile?.companyName}</IonLabel>
-                <IonText slot="end" color="primary">${companyProfile?.priceInfo.price}</IonText>
+                <IonText slot="end" color="primary">{companyProfile?.priceInfo.price && currencyFormatter.format(companyProfile?.priceInfo.price)}</IonText>
               </IonItem>
             </IonCol>
           </IonRow>
         </IonItem>
 
-        {/* Display stock price statistics */}
-        <IonListHeader>Price Info</IonListHeader>
-        <IonRow className="subtitle-content">
-          <IonCol>
-            {companyProfile?.priceInfo.high &&
-              <div>
-                <IonNote>High&nbsp;Today</IonNote><br />
-                <IonLabel>${companyProfile?.priceInfo.high}</IonLabel>
-                <hr />
-              </div>
-            }
-            {companyProfile?.priceInfo.week52High &&
-              <div>
-                <IonNote>52&nbsp;Weeks&nbsp;High</IonNote><br />
-                <IonLabel>${companyProfile?.priceInfo.week52High}</IonLabel>
-                <hr />
-              </div>
-            }
-            {companyProfile?.priceInfo.open &&
-              <div>
-                <IonNote>Open</IonNote><br />
-                <IonLabel>${companyProfile?.priceInfo.open}</IonLabel>
-                <hr />
-              </div>
-            }
-          </IonCol>
-          <IonCol>
-            {companyProfile?.priceInfo.low &&
-              <div>
-                <IonNote>Low&nbsp;Today</IonNote><br />
-                <IonLabel>${companyProfile?.priceInfo.low}</IonLabel>
-                <hr />
-              </div>
-            }
-            {companyProfile?.priceInfo.week52Low &&
-              <div>
-                <IonNote>52&nbsp;Weeks&nbsp;Low</IonNote><br />
-                <IonLabel>${companyProfile?.priceInfo.week52Low}</IonLabel>
-                <hr />
-              </div>
-            }
-            {companyProfile?.priceInfo.close &&
-              <div>
-                <IonNote>Close</IonNote><br />
-                <IonLabel>${companyProfile?.priceInfo.close}</IonLabel>
-                <hr />
-              </div>
-            }
-          </IonCol>
-        </IonRow>
+        {!!errorMessage ? <div className="ion-text-center"><IonNote color="danger">{errorMessage}</IonNote></div> : <div>
 
-        {/* Display invest,ent details, if the user already has shares on this stock */}
-        {companyProfile?.symbol && portfolio.stocks.find(s => s.symbol === companyProfile.symbol) &&
-          <div>
-            <IonListHeader>Your Investment</IonListHeader>
-            {portfolio.stocks.filter(s => s.symbol === companyProfile.symbol).map(stock => {
-              const equity = stock.price * stock.shares;
-              const yourReturn = equity - stock.averageCost * stock.shares;
-              return (
-                <IonRow className="subtitle-content">
-                  <IonCol>
-                    <IonNote>Shares</IonNote><br />
-                    <IonLabel>{stock.shares.toFixed(3)}</IonLabel>
-                    <hr />
-                    <IonNote>Last&nbsp;Price</IonNote><br />
-                    <IonLabel>{currencyFormatter.format(stock.price)}</IonLabel>
-                    <hr />
-                  </IonCol>
-                  <IonCol>
-                    <IonNote>Your&nbsp;Equity</IonNote><br />
-                    <IonLabel>{currencyFormatter.format(equity)}</IonLabel>
-                    <hr />
-                    <IonNote>Your&nbsp;Return</IonNote><br />
-                    <IonLabel>{currencyFormatter.format(yourReturn)}</IonLabel>
-                    <hr />
+          {/* Display stock price statistics */}
+          <IonListHeader>Price Info</IonListHeader>
+          <IonRow className="subtitle-content">
+            <IonCol>
+              {companyProfile?.priceInfo.high &&
+                <div>
+                  <IonNote>High&nbsp;Today</IonNote><br />
+                  <IonLabel>${companyProfile?.priceInfo.high}</IonLabel>
+                  <hr />
+                </div>
+              }
+              {companyProfile?.priceInfo.week52High &&
+                <div>
+                  <IonNote>52&nbsp;Weeks&nbsp;High</IonNote><br />
+                  <IonLabel>${companyProfile?.priceInfo.week52High}</IonLabel>
+                  <hr />
+                </div>
+              }
+              {companyProfile?.priceInfo.open &&
+                <div>
+                  <IonNote>Open</IonNote><br />
+                  <IonLabel>${companyProfile?.priceInfo.open}</IonLabel>
+                  <hr />
+                </div>
+              }
+            </IonCol>
+            <IonCol>
+              {companyProfile?.priceInfo.low &&
+                <div>
+                  <IonNote>Low&nbsp;Today</IonNote><br />
+                  <IonLabel>${companyProfile?.priceInfo.low}</IonLabel>
+                  <hr />
+                </div>
+              }
+              {companyProfile?.priceInfo.week52Low &&
+                <div>
+                  <IonNote>52&nbsp;Weeks&nbsp;Low</IonNote><br />
+                  <IonLabel>${companyProfile?.priceInfo.week52Low}</IonLabel>
+                  <hr />
+                </div>
+              }
+              {companyProfile?.priceInfo.close &&
+                <div>
+                  <IonNote>Close</IonNote><br />
+                  <IonLabel>${companyProfile?.priceInfo.close}</IonLabel>
+                  <hr />
+                </div>
+              }
+            </IonCol>
+          </IonRow>
 
-                  </IonCol>
-                </IonRow>)
-            })
-            }
-          </div>
-        }
+          {/* Display invest,ent details, if the user already has shares on this stock */}
+          {companyProfile?.symbol && portfolio.stocks.find(s => s.symbol === companyProfile.symbol) &&
+            <div>
+              <IonListHeader>Your Investment</IonListHeader>
+              {portfolio.stocks.filter(s => s.symbol === companyProfile.symbol).map(stock => {
+                const equity = stock.price * stock.shares;
+                const yourReturn = equity - stock.averageCost * stock.shares;
+                return (
+                  <IonRow className="subtitle-content">
+                    <IonCol>
+                      <IonNote>Shares</IonNote><br />
+                      <IonLabel>{stock.shares.toFixed(3)}</IonLabel>
+                      <hr />
+                      <IonNote>Last&nbsp;Price</IonNote><br />
+                      <IonLabel>{currencyFormatter.format(stock.price)}</IonLabel>
+                      <hr />
+                    </IonCol>
+                    <IonCol>
+                      <IonNote>Your&nbsp;Equity</IonNote><br />
+                      <IonLabel>{currencyFormatter.format(equity)}</IonLabel>
+                      <hr />
+                      <IonNote>Your&nbsp;Return</IonNote><br />
+                      <IonLabel>{currencyFormatter.format(yourReturn)}</IonLabel>
+                      <hr />
 
-        {/* Display additional company information */}
-        <IonListHeader>Company Info</IonListHeader>
-        <IonRow className="subtitle-content">
-          <IonCol>
-            <IonNote>CEO</IonNote><br />
-            <IonLabel>{companyProfile?.ceo}</IonLabel>
-            <hr />
-            {companyProfile?.employees ?
-              <div>
-                <IonNote>Employees</IonNote><br />
-                <IonLabel>{companyProfile?.employees}</IonLabel>
-                <hr />
-              </div>
-              :
-              <div>
-                <IonNote>Exchange</IonNote><br />
-                <IonLabel>{companyProfile?.exchange}</IonLabel>
-                <hr />
-              </div>
-            }
-          </IonCol>
-          <IonCol>
-            <IonNote>Symbol</IonNote><br />
-            <IonLabel>{companyProfile?.symbol}</IonLabel>
-            <hr />
-            <IonNote>Industry</IonNote><br />
-            <IonLabel>{companyProfile?.industry}</IonLabel>
-            <hr />
-          </IonCol>
-        </IonRow>
+                    </IonCol>
+                  </IonRow>)
+              })
+              }
+            </div>
+          }
+
+          {/* Display additional company information */}
+          <IonListHeader>Company Info</IonListHeader>
+          <IonRow className="subtitle-content">
+            <IonCol>
+              <IonNote>CEO</IonNote><br />
+              <IonLabel>{companyProfile?.ceo}</IonLabel>
+              <hr />
+              {companyProfile?.employees ?
+                <div>
+                  <IonNote>Employees</IonNote><br />
+                  <IonLabel>{companyProfile?.employees}</IonLabel>
+                  <hr />
+                </div>
+                :
+                <div>
+                  <IonNote>Exchange</IonNote><br />
+                  <IonLabel>{companyProfile?.exchange}</IonLabel>
+                  <hr />
+                </div>
+              }
+            </IonCol>
+            <IonCol>
+              <IonNote>Symbol</IonNote><br />
+              <IonLabel>{companyProfile?.symbol}</IonLabel>
+              <hr />
+              <IonNote>Industry</IonNote><br />
+              <IonLabel>{companyProfile?.industry}</IonLabel>
+              <hr />
+            </IonCol>
+          </IonRow>
+        </div>}
 
         {tradeRequestModalForm}
       </IonContent>
