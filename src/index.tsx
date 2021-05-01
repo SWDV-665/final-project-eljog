@@ -1,4 +1,5 @@
-import Amplify, { Auth } from 'aws-amplify';
+import { Capacitor } from '@capacitor/core';
+import { Auth } from 'aws-amplify';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
@@ -9,8 +10,14 @@ import reportWebVitals from './reportWebVitals';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 import store from './store';
 
-Auth.configure({ storage: NativeKeyValueStorage });
-Amplify.configure(awsconfig);
+if (Capacitor.getPlatform() === "android") {
+  // Amplify library has trouble with initializing state from NativeKeyValueStorage,
+  // hence using default storage for noow
+  Auth.configure({ ...awsconfig });
+}
+else {
+  Auth.configure({ ...awsconfig, storage: NativeKeyValueStorage });
+}
 
 ReactDOM.render(
   <React.StrictMode>
