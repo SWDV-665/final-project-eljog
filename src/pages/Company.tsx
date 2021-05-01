@@ -98,7 +98,7 @@ const Company: React.FC = () => {
     const form = event.currentTarget;
 
     setFormSubmitted(true);
-    if (!form.checkValidity() || !companyProfile) {
+    if (!companyProfile) {
       return;
     }
 

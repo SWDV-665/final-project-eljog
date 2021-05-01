@@ -47,9 +47,9 @@ class NativeKeyValueStorage {
     */
     static sync() {
         if (!NativeKeyValueStorage.syncPromise) {
-            NativeKeyValueStorage.syncPromise = new Promise((res, rej) => {
-                Storage.keys().then((allKeys: { keys: string[] }) => {
-                    const { keys } = allKeys;
+            NativeKeyValueStorage.syncPromise = new Promise(async (res, rej) => {
+                try {
+                    const { keys } = await Storage.keys();
                     const memoryKeys = keys.filter((key) => key.startsWith(NATIVE_STORAGE_KEY_PREFIX));
                     memoryKeys.map(async (key: string) => {
                         try {
@@ -61,9 +61,12 @@ class NativeKeyValueStorage {
                         }
                     });
                     res();
-                }).catch((err) => rej(err));
+                } catch (err) {
+                    rej(err);
+                }
             });
         }
+
         return NativeKeyValueStorage.syncPromise;
     }
 }
